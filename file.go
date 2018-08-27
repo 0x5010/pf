@@ -129,7 +129,7 @@ func (pf *PF) run() {
 				} else {
 					fmt.Println("no ok: ", err.Error())
 				}
-				close(pf.finish)
+				pf.finish <- struct{}{}
 				return
 			}
 		}
@@ -138,11 +138,6 @@ func (pf *PF) run() {
 
 // WaitFinish wait all done
 func (pf *PF) WaitFinish() {
-	pf.mutex.RLock()
-	defer pf.mutex.RUnlock()
-	if pf.checked {
-		return
-	}
 	<-pf.finish
 }
 
@@ -153,7 +148,6 @@ func (pf *PF) fileCheck() error {
 	if pf.checked {
 		return nil
 	}
-
 	if pf.FileSize != 0 {
 		fi, err := os.Stat(pf.Filepath)
 		if err != nil {
@@ -166,7 +160,6 @@ func (pf *PF) fileCheck() error {
 			}
 		}
 	}
-
 	return pf.hashCheck()
 }
 
