@@ -1,3 +1,5 @@
+package pf
+
 /*
  *
  * Created by 0x5010 on 2018/08/27.
@@ -8,7 +10,6 @@
  * Licensed under the MIT license.
  *
  */
-package pf
 
 import (
 	"crypto/md5"
