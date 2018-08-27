@@ -34,8 +34,8 @@ type PF struct {
 	file       *os.File
 	Filepath   string
 	Hash       string
-	FileSize   int
-	PieceSize  int
+	FileSize   int64
+	PieceSize  int64
 	PieceCount int
 	Progress   *Progress
 	checked    bool
@@ -46,9 +46,9 @@ type PF struct {
 type PFOption func(*PF)
 
 // SetPieceSize set PF PieceSize
-func SetPieceSize(pieceSize int) PFOption {
+func SetPieceSize(pieceSize int64) PFOption {
 	return func(pf *PF) {
-		pf.PieceCount = (pf.FileSize + pieceSize - 1) / pieceSize
+		pf.PieceCount = int((pf.FileSize + pieceSize - 1) / pieceSize)
 		pf.PieceSize = pieceSize
 	}
 }
@@ -57,7 +57,7 @@ func SetPieceSize(pieceSize int) PFOption {
 func SetPieceCount(pieceCount int) PFOption {
 	return func(pf *PF) {
 		pf.PieceCount = pieceCount
-		pf.PieceSize = (pf.FileSize + pieceCount - 1) / pieceCount
+		pf.PieceSize = (pf.FileSize + int64(pieceCount) - 1) / int64(pieceCount)
 	}
 }
 
@@ -69,12 +69,12 @@ func SetHash(hash string) PFOption {
 }
 
 // New initialization PF
-func New(filename string, fileSize int, opts ...PFOption) (*PF, error) {
+func New(filename string, fileSize int64, opts ...PFOption) (*PF, error) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return nil, err
 	}
-	piecesize := (fileSize + defaultPieceCount - 1) / defaultPieceCount
+	piecesize := (fileSize + int64(defaultPieceCount) - 1) / int64(defaultPieceCount)
 	pf := &PF{
 		file:       file,
 		Filepath:   filename,
@@ -105,7 +105,7 @@ func (pf *PF) Write(index int, data []byte) error {
 	if ok, err := pf.Progress.Contains(index); ok || err != nil {
 		return err
 	}
-	_, err := pf.file.WriteAt(data, int64(index)*int64(pf.PieceSize))
+	_, err := pf.file.WriteAt(data, int64(index)*pf.PieceSize)
 	if err != nil {
 		fmt.Println("err write at")
 		return err
@@ -160,9 +160,8 @@ func (pf *PF) fileCheck() error {
 		return err
 	}
 
-	filesize := int64(pf.FileSize)
-	if fi.Size() != filesize {
-		err = pf.file.Truncate(filesize)
+	if fi.Size() != pf.FileSize {
+		err = pf.file.Truncate(pf.FileSize)
 		if err != nil {
 			return err
 		}
