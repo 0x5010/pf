@@ -1,3 +1,13 @@
+/*
+ *
+ * Created by 0x5010 on 2018/08/27.
+ * pf
+ * https://github.com/0x5010/pf
+ *
+ * Copyright 2018 0x5010.
+ * Licensed under the MIT license.
+ *
+ */
 package pf
 
 import (
