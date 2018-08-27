@@ -15,7 +15,6 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"runtime"
 	"sync"
@@ -155,41 +154,35 @@ func (pf *PF) fileCheck() error {
 		return nil
 	}
 
-	fi, err := os.Stat(pf.Filepath)
-	if err != nil {
-		return err
-	}
-
-	if fi.Size() != pf.FileSize {
-		err = pf.file.Truncate(pf.FileSize)
+	if pf.FileSize != 0 {
+		fi, err := os.Stat(pf.Filepath)
 		if err != nil {
 			return err
 		}
+		if fi.Size() != pf.FileSize {
+			err = pf.file.Truncate(pf.FileSize)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	if pf.hashCheck() {
-		return nil
-	}
-	return fmt.Errorf("hash no match")
+	return pf.hashCheck()
 }
 
-func (pf *PF) hashCheck() bool {
+func (pf *PF) hashCheck() error {
 	if len(pf.Hash) == 0 {
-		return true
+		return nil
 	}
 	data, err := ioutil.ReadFile(pf.Filepath)
 	if err != nil {
-		log.Println(err)
-		return false
+		return err
 	}
 	cur := fmt.Sprintf("%x", md5.Sum(data))
 	if cur == pf.Hash {
-		log.Println("check success:", pf.Hash)
-		return true
+		return nil
 	}
-
-	log.Println("check failed:", cur, pf.Hash)
-	return false
+	return fmt.Errorf("hash no match")
 }
 
 // Checked check all done
